@@ -3,14 +3,29 @@ import {StyleSheet, Text, View} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Onboarding from './screens/Onboarding';
+import SplashScreen from './screens/SplashScreen';
+import Profile from './screens/Profile';
+import {useContext, useEffect, useState} from 'react';
+import {UserContext, UserContextProvider} from './contexts/UserContextProvider';
 
+/**
+ * Main app component
+ * @returns {JSX.Element}
+ * @constructor
+ */
+const AppContent = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
-
-
-const App = () => {
   const Stack = createNativeStackNavigator();
+  const user = useContext(UserContext);
 
-  const HomeScreen = () => {
+  /**
+   * Home screen
+   * @returns {JSX.Element}
+   * @constructor
+   */
+  const Home = () => {
     return (
       <View style={styles.container}>
         <Text>Open up App.js to start working on your app!</Text>
@@ -18,13 +33,41 @@ const App = () => {
       </View>
     );
   }
+
+  useEffect(() => {
+    console.log('App useEffect: user.data', user.data)
+    setOnboardingCompleted(user.data.onboardingCompleted);
+  }, [user]);
+
+
+  // Check if loading and show splash screen
+  if (isLoading) {
+    // We haven't finished reading from AsyncStorage yet
+    return <SplashScreen />;
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="Onboarding" component={Onboarding} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+        {onboardingCompleted ? (
+          <>
+            <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="Home" component={Home} />
+          </>
+        ) : (
+          <Stack.Screen name="Onboarding" component={Onboarding} />
+        )
+        }
       </Stack.Navigator>
     </NavigationContainer>
+  );
+}
+
+const App = () => {
+  return (
+    <UserContextProvider>
+      <AppContent />
+    </UserContextProvider>
   );
 }
 
