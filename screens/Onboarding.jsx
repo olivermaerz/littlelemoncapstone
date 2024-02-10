@@ -1,5 +1,6 @@
 import {Alert, Button, TextInput, View, StyleSheet, Text, Image, Pressable} from 'react-native';
-import React, {isValidElement, useEffect, useState} from 'react';
+import React, {isValidElement, useEffect, useState, useContext} from 'react';
+import {UserContext} from '../contexts/UserContextProvider';
 
 /**
  * Onboarding screen component
@@ -12,10 +13,16 @@ const Onboarding = ({navigation}) => {
   const [emailValid, setEmailValid] = useState(true);
   const [formWasSubmitted, setFormWasSubmitted] = useState(false);
 
+  const user = useContext(UserContext);
+
   // set setFormWasSubmitted to false when component mounts
   useEffect(() => {
     setFormWasSubmitted(false);
   }, []);
+
+  useEffect(() => {
+    console.log('Onboarding: user', user.data);
+  }, [user]);
 
   // validate email when email state changes
   useEffect(() => {
@@ -29,11 +36,9 @@ const Onboarding = ({navigation}) => {
    * @returns {boolean}
    */
   const validateEmail = (email) => {
-    //const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    //const emailRegex = /^[^\s@]+@[^\s@]+\.[A-Za-z0-9]+$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
     return emailRegex.test(email);
-  };
+  }
 
   /**
    * Handles the form submission, displays alerts and navigates to the home screen if everything is valid
@@ -57,8 +62,11 @@ const Onboarding = ({navigation}) => {
       return;
     }
 
+    // Update the user data in the context
+    user.updateUser({name: firstName, email: email, onboardingCompleted: true});
+
     // If everything is valid, navigate to the home screen
-    navigation.navigate('Home');
+    //navigation.navigate('Profile');
   }
 
   return (
@@ -79,12 +87,12 @@ const Onboarding = ({navigation}) => {
           style={styles.input}
           // set the state
           onChangeText={(text) => setFirstName(text)}
-          autoCapitalize='none'
         />
         <Text style={styles.fieldText}>Email</Text>
         {formWasSubmitted && email && !emailValid && <Text style={{color: 'red'}}>Please enter a valid email address.</Text>}
         {formWasSubmitted && !email && <Text style={{color: 'red'}}>Please enter your email address.</Text>}
         <TextInput
+          autoCapitalize='none'o
           placeholder="Email"
           style={styles.input}
           keyboardType="email-address"
