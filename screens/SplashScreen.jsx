@@ -1,4 +1,5 @@
 import {View, Text, StyleSheet, ActivityIndicator} from 'react-native';
+import colors from '../styles/colors';
 
 /**
  * The Splash Screen
@@ -23,11 +24,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.primary1,
+    color: colors.primary2
   },
   text: {
     fontSize: 24,
   },
 });
-
 
 export default SplashScreen;

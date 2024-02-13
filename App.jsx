@@ -1,5 +1,3 @@
-import {StatusBar} from 'expo-status-bar';
-import {StyleSheet, Text, View} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Onboarding from './screens/Onboarding';
@@ -7,6 +5,8 @@ import SplashScreen from './screens/SplashScreen';
 import Profile from './screens/Profile';
 import {useContext, useEffect, useState} from 'react';
 import {UserContext, UserContextProvider} from './contexts/UserContextProvider';
+import loadFonts from './utils/loadFonts';
+import {getUserData} from './utils/dataStorage';
 
 /**
  * Main app component
@@ -20,19 +20,18 @@ const AppContent = () => {
   const Stack = createNativeStackNavigator();
   const user = useContext(UserContext);
 
-  /**
-   * Home screen
-   * @returns {JSX.Element}
-   * @constructor
-   */
-  const Home = () => {
-    return (
-      <View style={styles.container}>
-        <Text>Open up App.js to start working on your app!</Text>
-        <StatusBar style="auto" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    // load the user data from AsyncStorage
+    (async () => {
+      setIsLoading(true);
+
+      getUserData().then((data) => {
+        user.updateUser(data);
+      });
+
+      setIsLoading(false);
+    })();
+  } , []);
 
   useEffect(() => {
     console.log('App useEffect: user.data', user.data)
@@ -52,7 +51,6 @@ const AppContent = () => {
         {onboardingCompleted ? (
           <>
             <Stack.Screen name="Profile" component={Profile} />
-            <Stack.Screen name="Home" component={Home} />
           </>
         ) : (
           <Stack.Screen name="Onboarding" component={Onboarding} />
@@ -64,20 +62,17 @@ const AppContent = () => {
 }
 
 const App = () => {
-  return (
-    <UserContextProvider>
-      <AppContent />
-    </UserContextProvider>
-  );
-}
+  // load the custom fonts (makes them app wide available as 'Markazi' and 'Karla')
+  const [fontsLoaded] = loadFonts();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+  return (
+    <>
+      {fontsLoaded === false ? <SplashScreen /> :
+        (<UserContextProvider>
+          <AppContent />
+        </UserContextProvider>) }
+    </>
+  )
+}
 
 export default App;
