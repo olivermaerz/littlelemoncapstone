@@ -4,7 +4,6 @@ import {UserContext} from '../contexts/UserContextProvider';
 import formStyles from '../styles/formStyles';
 import generalStyles from '../styles/generalStyles';
 import {validGenericField, validEmailField} from '../utils/validateFormFields';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 /**
@@ -19,11 +18,16 @@ const Onboarding = ({navigation}) => {
 
   const user = useContext(UserContext);
 
-  // set setFormWasSubmitted to false when component mounts
+  /*
+   set setFormWasSubmitted to false when component mounts
+   */
   useEffect(() => {
     setFormWasSubmitted(false);
   }, []);
 
+  /*
+   useEffect to log the user data when it changes
+   */
   useEffect(() => {
     console.log('Onboarding: user', user.data);
   }, [user]);
@@ -36,21 +40,18 @@ const Onboarding = ({navigation}) => {
     // Validate the form fields and get all errors in a string.
     const error = validGenericField(firstName, 'first name') + validEmailField(email);
     if (error) {
-      Alert.alert('Signup Error', '\n' + error);
+      Alert.alert('Oops', '\n' + error);
       return;
     }
-
     // Update the user data in the context
-    user.updateUser({firstName: firstName, email: email, onboardingCompleted: true});
-
-    // If everything is valid, navigate to the home screen
-    //navigation.navigate('Profile');
+    user.updateUser({firstName: firstName, lastName: '', email: email, onboardingCompleted: true, isLoggedIn: true});
   }
 
   return (
     <>
-      <Header />
       <View style={styles.container}>
+        <Text style={styles.title}>Welcome to the Little Lemon!</Text>
+        <Text style={styles.description}>You are almost there. Please enter your first name and email address:</Text>
         <Text style={styles.fieldText}>First Name</Text>
         <TextInput
           placeholder="John"
@@ -82,6 +83,20 @@ const Onboarding = ({navigation}) => {
 const styles = StyleSheet.create({
   ...formStyles,
   ...generalStyles,
+  title: {
+    fontFamily: 'Markazi',
+    fontSize: 28,
+  },
+  description: {
+    fontFamily: 'Karla',
+    fontSize: 16,
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  container: {
+    ...generalStyles.container,
+    paddingTop: 40,
+  }
 });
 
 export default Onboarding;

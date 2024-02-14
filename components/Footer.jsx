@@ -1,5 +1,6 @@
 import {StyleSheet, View, Text} from 'react-native';
 import generalStyles from '../styles/generalStyles';
+import colors from '../styles/colors';
 
 /**
  * Footer component
@@ -18,10 +19,8 @@ const Footer = () => {
 const styles = StyleSheet.create({
   footer: {
     ...generalStyles,
-    container:{
-      ...generalStyles.container,
-      flex: 1,
-    }
+    backgroundColor: colors.highlight1,
+    flex: 1,
   },
 });
 

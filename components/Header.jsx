@@ -1,59 +1,86 @@
-import {StyleSheet, View, Image, Text} from 'react-native';
+import {StyleSheet, View, Image, Text, SafeAreaView, Pressable} from 'react-native';
 import colors from '../styles/colors';
 import {UserContext} from '../contexts/UserContextProvider';
 import {useContext, useEffect, useState} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * The header component
  * @returns {JSX.Element}
  * @constructor
  */
-const Header = () => {
+const Header = ({navigation}) => {
   // get the user context
   const user = useContext(UserContext);
   const [image, setImage] = useState(null);
   const [initials, setInitials] = useState('');
+  const [canGoBack, setCanGoBack] = useState(false);
 
+  /*
+   useEffect to set the image or initials based on the user data
+   */
   useEffect(() => {
+    console.log('header user.data', user.data);
     (async () => {
       if (user.data.isLoggedIn) {
-        const image = user.data.avatar;
-        if (image) {
-          setImage(image);
+        const avatar = user.data.avatar;
+        if (avatar) {
+          setImage(user.data.avatar);
         } else {
+          setImage(null);
           const firstName = user.data.firstName;
           const lastName = user.data.lastName;
-          setInitials(`${Array.from(firstName)[0]}${Array.from(lastName)[0]}`);
+          if (lastName) {
+            setInitials(`${Array.from(firstName)[0]}${Array.from(lastName)[0]}`);
+          } else {
+            setInitials(`${Array.from(firstName)[0]}`);
+          }
         }
       }
     })();
   }, [user.data]);
 
+  /*
+   useEffect to set the canGoBack state based on the navigation prop (it can be undefined when the component is
+   not fully mounted yet)
+   */
+  useEffect(() => {
+    setCanGoBack(!!navigation?.canGoBack());
+    //console.log('canGoBack', !!navigation?.canGoBack());
+  }, [navigation]);
+
   return (
     <>
-    <View style={styles.header}>
-      <View style={styles.backButton}>
-        <Text style={styles.backText}>←</Text>
-      </View>
+    <SafeAreaView style={styles.header}>
+      {canGoBack ?
+        <Pressable onPress={() => navigation.goBack()}>
+          <View style={styles.backButton}>
+            <Text style={styles.backText }>←</Text>
+          </View>
+        </Pressable>
+      : <View style={styles.placeholder}></View> }
       <Image
         source={require('../assets/images/logo.png')}
         style={styles.image}
         // align center
         resizeMode="contain"
       />
-      {image ?
-        <Image source={{uri: image}} style={styles.avatarImage} />
-        :
-        (initials ?
-          <View style={styles.avatarInitials}>
-          <Text style={styles.avatarInitialsText}>{initials}</Text>
-        </View> :
-            <View style={styles.placeholder}></View>
-        )
-      }
-    </View>
-   {user.data.loggedIn && <Image source={require('../assets/images/Profile.png')} style={styles.profileImage} />}
+      {user.data.isLoggedIn ? (
+      <Pressable onPress={() => navigation.navigate('Profile')}>
+        {image ?
+          <Image source={{uri: image}} style={styles.avatarImage} />
+          :
+          (initials ?
+            <View style={styles.avatarInitials}>
+            <Text style={styles.avatarInitialsText}>{initials}</Text>
+          </View> :
+              <View style={styles.placeholder}></View>
+          )
+        }
+      </Pressable>
+      ) : (
+      <View style={styles.placeholder}></View>
+      )}
+    </SafeAreaView>
     </>
   );
 }
@@ -109,8 +136,9 @@ const styles = StyleSheet.create({
   },
   avatarInitialsText: {
     color: colors.highlight1,
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
+    fontFamily: 'Markazi',
   },
   backButton: {
     width: 40,
