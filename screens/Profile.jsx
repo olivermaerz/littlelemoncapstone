@@ -4,14 +4,14 @@ import {useContext, useEffect, useState} from 'react';
 import {MaskedTextInput} from 'react-native-mask-text';
 import {UserContext} from '../contexts/UserContextProvider';
 import * as ImagePicker from 'expo-image-picker';
+import FlashMessage, {showMessage} from "react-native-flash-message";
 
 // get the styles
 import generalStyles from '../styles/generalStyles';
 import colors from '../styles/colors';
 import formStyles, {getButtonStyle} from '../styles/formStyles';
 
-// get components for header and footer
-import Header from '../components/Header';
+// get components
 import Footer from '../components/Footer';
 
 // get some helper functions for form validation and data storage on local device
@@ -92,7 +92,7 @@ const Profile = () => {
    * @param loggedIn
    */
   const saveUserStatus = (loggedIn = true) => {
-    user.updateUser({
+    return user.updateUser({
       firstName: firstName,
       lastName: lastName,
       email: email,
@@ -128,7 +128,7 @@ const Profile = () => {
   /**
    * Handle the form submit
    */
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setFormWasSubmitted(true);
     const error = validGenericField(firstName, 'first name') +
       validGenericField(lastName, 'last name') +
@@ -136,23 +136,29 @@ const Profile = () => {
       validPhoneField(phone);
 
     if (error) {
-      Alert.alert('Profile Update Error', '\n' + error);
+      Alert.alert('Oops', '\n' + error);
       return;
     }
-    saveUserStatus();
+    await saveUserStatus();
+    showMessage({
+      message: "Profile updated",
+      type: "info",
+    });
   }
 
-
+  /*
+   useEffect to save the user data when it changes
+   */
   useEffect(() => {
     saveUserData(user.data);
   }, [user.data]);
 
   return (
     <>
-      <Header />
       <ScrollView style={styles.container}>
         <Text style={styles.headerText}>Avatar</Text>
         <View style={styles.avatarContainer}>
+          <Pressable onPress={pickImage}>
           {avatar ?
             <Image source={{uri: avatar}} style={styles.avatarImage} />
             :
@@ -160,6 +166,7 @@ const Profile = () => {
               <Text style={styles.avatarInitialsText}>{Array.from(firstName)[0]}{Array.from(lastName)[0]}</Text>
             </View>
           }
+          </Pressable>
           <Pressable style={({pressed}) => getButtonStyle(pressed, styles.avatarButton2)}
                      onPress={pickImage}>
             <Text style={styles.buttonText}>Change</Text>
@@ -276,6 +283,7 @@ const Profile = () => {
 
       </ScrollView>
       <Footer />
+      <FlashMessage position="top" style={styles.flash} textStyle={styles.flashText} titleStyle={styles.flashText}/>
     </>
   );
 }
@@ -350,6 +358,15 @@ const styles = StyleSheet.create({
     ...formStyles.button,
     backgroundColor: colors.secondary1,
     width: '48%',
+  },
+  flash: {
+    backgroundColor: colors.primary1,
+  },
+  flashText: {
+    color: colors.white,
+    fontFamily: 'Karla',
+    fontSize: 20,
+    paddingBottom: 20,
   },
 });
 

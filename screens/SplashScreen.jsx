@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, ActivityIndicator} from 'react-native';
+import {View, Text, StyleSheet, ActivityIndicator, Image} from 'react-native';
 import colors from '../styles/colors';
 
 /**
@@ -10,6 +10,7 @@ const SplashScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Little Lemon</Text>
+      <Image source={require('../assets/images/logoMono.png')} />
       <ActivityIndicator />
     </View>
   );

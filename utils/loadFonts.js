@@ -7,8 +7,13 @@ import {useFonts} from 'expo-font';
  */
 const loadFonts = () => {
   const customFonts = {
-    'Karla': require('../assets/fonts/Karla-VariableFont_wght.ttf'),
-    'Markazi': require('../assets/fonts/MarkaziText-VariableFont_wght.ttf'),
+    'Karla': require('../assets/fonts/Karla-Regular.ttf'),
+    'Karla-Bold': require('../assets/fonts/Karla-Bold.ttf'),
+    'Karla-Italic': require('../assets/fonts/Karla-Italic.ttf'),
+    'Karla-BoldItalic': require('../assets/fonts/Karla-BoldItalic.ttf'),
+    'Karla-ExtraBold': require('../assets/fonts/Karla-ExtraBold.ttf'),
+    'Markazi': require('../assets/fonts/MarkaziText-Regular.ttf'),
+    'Markazi-Bold': require('../assets/fonts/MarkaziText-Bold.ttf'),
   };
   return useFonts(customFonts);
 }

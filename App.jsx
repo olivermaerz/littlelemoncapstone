@@ -1,12 +1,20 @@
+import {useContext, useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+
+// import the user context and provider
+import {UserContext, UserContextProvider} from './contexts/UserContextProvider';
+
+// import the utility functions for style and data storage
+import loadFonts from './utils/loadFonts';
+import {getUserData} from './utils/dataStorage';
+
+// import the screens
 import Onboarding from './screens/Onboarding';
 import SplashScreen from './screens/SplashScreen';
 import Profile from './screens/Profile';
-import {useContext, useEffect, useState} from 'react';
-import {UserContext, UserContextProvider} from './contexts/UserContextProvider';
-import loadFonts from './utils/loadFonts';
-import {getUserData} from './utils/dataStorage';
+import Home from './screens/Home';
+import Header from './components/Header';
 
 /**
  * Main app component
@@ -15,7 +23,7 @@ import {getUserData} from './utils/dataStorage';
  */
 const AppContent = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const Stack = createNativeStackNavigator();
   const user = useContext(UserContext);
@@ -35,7 +43,7 @@ const AppContent = () => {
 
   useEffect(() => {
     console.log('App useEffect: user.data', user.data)
-    setOnboardingCompleted(user.data.onboardingCompleted);
+    setIsLoggedIn(user.data.isLoggedIn);
   }, [user]);
 
 
@@ -48,12 +56,29 @@ const AppContent = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        {onboardingCompleted ? (
+        {isLoggedIn ? (
           <>
-            <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="Home" component={Home}
+              options={({navigation}) => ({
+                headerShown: true,
+                header: () => (<Header navigation={navigation} />),
+                //headerTitle: (props) => (<Header {...props} />),
+              })}
+            />
+            <Stack.Screen name="Profile" component={Profile}
+              options={({navigation}) => ({
+                headerShown: true,
+                header: () => (<Header navigation={navigation} />),
+              })}
+            />
           </>
         ) : (
-          <Stack.Screen name="Onboarding" component={Onboarding} />
+          <Stack.Screen name="Onboarding" component={Onboarding}
+            options={({navigation}) => ({
+              headerShown: true,
+              header: () => (<Header navigation={navigation} />),
+            })}
+          />
         )
         }
       </Stack.Navigator>
