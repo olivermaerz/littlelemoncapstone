@@ -1,7 +1,7 @@
 # Little Lemon Capstone Project
 
-## Optimized for iOS
-## Uses Expo SDK 50
+* Optimized for iOS
+* Uses Expo SDK 50
 
 ## Introduction
 This is a capstone project for the Coursera React Native Specialization.
