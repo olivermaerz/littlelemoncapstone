@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
 
+/* - - - - - - - - AsyncStorage functions - - - - - - - - */
 
 /**
  * Save the user data to the local storage
@@ -31,6 +32,19 @@ const getUserData = async () => {
   }
 }
 
+/**
+ * Delete the user data from the local storage
+ * @returns {Promise<void>}
+ */
+const deleteUserData = async () => {
+  try {
+    await AsyncStorage.removeItem('user');
+  } catch (e) {
+    console.error('Error deleting user data', e);
+  }
+}
+
+/* - - - - - - - - SQLite functions - - - - - - - - */
 
 /**
  * Open the local sqlite database
@@ -49,11 +63,12 @@ const openDatabase = () => {
 /**
  * Save the menu items in the local sqlite database
  * @param data
+ * @returns {Promise<unknown>}
  */
 const saveMenuItems = (data) => {
   // save the menu items in sqllite
   const db = openDatabase();
-  db.transaction((tx) => {
+  return db.transaction((tx) => {
     data.forEach((item) => {
       tx.executeSql(
         'INSERT INTO menuItems (name, description, price, category, image) VALUES (?, ?, ?, ?, ?)',
@@ -67,16 +82,20 @@ const saveMenuItems = (data) => {
  * Get the menu items from the local sqlite database
  * @returns {Promise<unknown>}
  */
-const getMenuItems = () => {
+const getMenuItems = (searchTerm = '', categories = []) => {
+  const sqlStatement = searchTerm && categories.length > 0 ?
+    `SELECT * FROM menuItems WHERE name LIKE '%${searchTerm}%' AND category IN (${categories.map((category) => `'${category}'`).join(',')})`
+    : searchTerm ? `SELECT * FROM menuItems WHERE name LIKE '%${searchTerm}%'` :
+    categories.length > 0 ? `SELECT * FROM menuItems WHERE category IN (${categories.map((category) => `'${category}'`).join(',')})` :
+    'SELECT * FROM menuItems';
   const db = openDatabase();
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        'SELECT * FROM menuItems',
+        sqlStatement,
         [],
         (_, {rows: {_array}}) => {
           resolve(_array);
-          console.log('Menu items loaded from local storage', _array);
         },
         (_, error) => {
           console.error('Error loading menu items', error);
@@ -87,6 +106,39 @@ const getMenuItems = () => {
   });
 }
 
-export {saveUserData, getUserData, saveMenuItems, getMenuItems};
+/**
+ * Delete the menu items from the local sqlite database
+ */
+const deleteMenuItems = () => {
+  const db = openDatabase();
+  db.transaction((tx) => {
+    tx.executeSql('DELETE FROM menuItems');
+  });
+}
+
+/**
+ * Get the count of the menu items in the local sqlite database
+ * @returns {Promise<unknown>}
+ */
+const getMenuItemCount = () => {
+  const db = openDatabase();
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'SELECT COUNT(*) FROM menuItems',
+        [],
+        (_, {rows: {_array}}) => {
+          resolve(_array[0]['COUNT(*)']);
+        },
+        (_, error) => {
+          console.error('Error loading menu items', error);
+          reject(error);
+        }
+      );
+    });
+  });
+}
+
+export {saveUserData, getUserData, deleteUserData, saveMenuItems, getMenuItems, deleteMenuItems, getMenuItemCount};
 
 
