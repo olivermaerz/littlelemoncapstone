@@ -1,5 +1,7 @@
 # Little Lemon Capstone Project
 
+Optimized for iOS
+
 ## Introduction
 This is a capstone project for the Coursera React Native Specialization.
 https://www.coursera.org/specializations/meta-react-native
@@ -21,6 +23,8 @@ To run the project, you can run the following command in the terminal:
 ```bash
 yarn start
 ```
+
+Then select "i" to start it in iOS. 
 
 
 
