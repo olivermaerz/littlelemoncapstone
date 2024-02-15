@@ -1,13 +1,13 @@
 import {useEffect, useState} from 'react';
-import {View, Text, FlatList, StyleSheet, SafeAreaView, Image, TextInput} from 'react-native';
+import {View, Text, FlatList, StyleSheet, SafeAreaView, Image, TextInput, ScrollView, Pressable} from 'react-native';
 
 // import styles
 import generalStyles from '../styles/generalStyles';
+import formStyles from '../styles/formStyles';
 import colors from '../styles/colors';
 
 // import utility functions for data storage
-import {getMenuItems} from '../utils/dataStorage';
-import {saveMenuItems} from '../utils/dataStorage';
+import {getMenuItems, getMenuItemCount, saveMenuItems} from '../utils/dataStorage';
 
 /**
  * Home screen
@@ -17,6 +17,12 @@ import {saveMenuItems} from '../utils/dataStorage';
 const Home = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [apiUrl, setApiUrl] = useState('https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json');
+  // for the menu items search and categories
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categories, setCategories] = useState(['Starters', 'Mains', 'Desserts', 'Drinks', 'Specials']);
+  const [categorySearch, setCategorySearch] = useState([]);
+  const [menuItemsLoaded, setMenuItemsLoaded] = useState(false);
+
 
   /**
    * Get the image URL
@@ -29,26 +35,96 @@ const Home = () => {
   }
 
   /**
-   * Load the menu items from the API
-   * @returns {Promise<void>}
+   * Fetch the menu items from the API
+   * @returns {Promise<*>}
    */
-  const loadMenuItems = async () => {
+  const fetchMenuItems = async () => {
     try {
       const response = await fetch(apiUrl);
       const data = await response.json();
-      console.log('data', data.menu);
+      console.log('API data', data.menu);
       // add a unique key to each item
       const augmentedData = data.menu.map((item, index) => {
-        console.log('item', item);
         return {
           ...item,
           id: index,
         }
       });
-      console.log('augmentedData', augmentedData);
-      setMenuItems(augmentedData);
+      return augmentedData;
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  /*
+   * useEffect to reload the menu items from db when the search term changes
+   */
+  useEffect(() => {
+    // give it a delay of 500ms
+    const delayDebounceFn = setTimeout(() => {
+      if(menuItemsLoaded) {
+        updateMenuItemsFromDB();
+      }
+    }, 500);
+
+  }, [searchTerm]);
+
+  /*
+   * useEffect to reload the menu items from db when the category search changes
+   */
+  useEffect(() => {
+    // reload the menu items when the category search changes
+    console.log('triggered category search', categorySearch);
+    if (menuItemsLoaded) {
+      updateMenuItemsFromDB();
+    }
+  }, [categorySearch]);
+
+  /**
+   * Load the menu items from the sqlite db or API
+   * @returns {Promise<void>}
+   */
+  const loadMenuItems = async () => {
+    // first check if the menu items are already in the db (count), then fetch
+    // them from the API and store the menu items in the db, finally get the menu items from the db
+    try {
+      const dbCount = await getMenuItemCount();
+      if (dbCount === 0) {
+        console.log('fetching menu items from the API');
+        const data = await fetchMenuItems();
+        await saveMenuItems(data);
+        setMenuItemsLoaded(true);
+
+      }
+      updateMenuItemsFromDB();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  /**
+   * Get the menu items from the db
+   * @returns {Promise<void>}
+   */
+  const updateMenuItemsFromDB = async () => {
+    try {
+      const data = await getMenuItems(searchTerm, categorySearch);
+      setMenuItems(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  /**
+   * Update the selected categories (from buttons) for the search
+   * @param category
+   */
+  const updateCategoriesForSearch = (category) => {
+    const lowerCategory = category.toLowerCase();
+    if (categorySearch.includes(lowerCategory)) {
+      setCategorySearch(categorySearch.filter(item => item !== lowerCategory));
+    } else {
+      setCategorySearch([...categorySearch, lowerCategory]);
     }
   }
 
@@ -56,8 +132,9 @@ const Home = () => {
    Load the menu items when the component mounts
    */
   useEffect(() => {
+    setSearchTerm('');
+    console.log('triggered component mount');
     loadMenuItems();
-    console.log('re-rendering')
   }, []);
 
   /**
@@ -101,10 +178,33 @@ const Home = () => {
           </View>
           <View style={styles.search}>
             <Image source={require('../assets/images/search.png')} style={styles.searchIcon} />
-            <TextInput placeholder="Search for a dish" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search for a dish"
+              onChangeText={(text) => setSearchTerm(text)}
+            />
           </View>
         </View>
         <Text style={styles.menuTitle}>Order for Delivery</Text>
+        <View>
+        <ScrollView
+          style={styles.buttonRow}
+          horizontal={true}
+          showsHorizontalScrollIndicator={true}
+        >
+          {categories.map((category, index) => {
+            return (
+              <Pressable
+                style={categorySearch.includes(category.toLowerCase()) ? styles.buttonActive : styles.button}
+                key={index}
+                onPress={() => updateCategoriesForSearch(category)}
+              >
+                <Text key={index} style={styles.buttonText}>{category}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+          </View>
         <View style={styles.list}>
           <FlatList
             style={styles.list}
@@ -125,6 +225,7 @@ const Home = () => {
  */
 const styles = StyleSheet.create({
   ...generalStyles,
+  ...formStyles,
   parentContainer: {
     backgroundColor: colors.highlight1,
     flex: 1,
@@ -183,7 +284,12 @@ const styles = StyleSheet.create({
   searchIcon: {
     width: 20,
     height: 20,
-    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 16,
+    fontFamily: 'Karla',
   },
   item: {
     flex: 1,
@@ -240,6 +346,31 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginTop: 10,
     marginLeft: 20,
+  },
+  buttonRow: {
+    marginLeft: 20,
+    flex: 0,
+  },
+  button: {
+    ...formStyles.button,
+    backgroundColor: colors.secondary2,
+    marginRight: 10,
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  buttonActive: {
+    ...formStyles.button,
+    backgroundColor: colors.secondary1,
+    marginRight: 10,
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  buttonText: {
+    ...formStyles.buttonText,
+    // capitalize the first letter of the category
+    textTransform: 'capitalize',
+    flex: 0,
+    color: colors.black,
   },
 });
 

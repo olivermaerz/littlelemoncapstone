@@ -1,10 +1,23 @@
-import {Alert, Button, TextInput, View, StyleSheet, Text, Image, Pressable} from 'react-native';
+import {
+  Alert,
+  Button,
+  TextInput,
+  View,
+  StyleSheet,
+  Text,
+  Image,
+  Pressable,
+  Platform,
+  KeyboardAvoidingView
+} from 'react-native';
 import React, {isValidElement, useEffect, useState, useContext} from 'react';
 import {UserContext} from '../contexts/UserContextProvider';
 import formStyles from '../styles/formStyles';
 import generalStyles from '../styles/generalStyles';
 import {validGenericField, validEmailField} from '../utils/validateFormFields';
 import Footer from '../components/Footer';
+import {saveUserData} from '../utils/dataStorage';
+import colors from '../styles/colors';
 
 /**
  * Onboarding screen component
@@ -45,10 +58,16 @@ const Onboarding = ({navigation}) => {
     }
     // Update the user data in the context
     user.updateUser({firstName: firstName, lastName: '', email: email, onboardingCompleted: true, isLoggedIn: true});
+    // Update the user data in the AsyncStorage
+    saveUserData({firstName: firstName, lastName: '', email: email, onboardingCompleted: true, isLoggedIn: true});
   }
 
   return (
-    <>
+    <KeyboardAvoidingView
+      style={styles.keyboardAvoidingView} // Make sure KeyboardAvoidingView takes up the full screen
+      behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjust behavior based on the OS
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0} // Adjust the offset on iOS
+    >
       <View style={styles.container}>
         <Text style={styles.title}>Welcome to the Little Lemon!</Text>
         <Text style={styles.description}>You are almost there. Please enter your first name and email address:</Text>
@@ -75,7 +94,7 @@ const Onboarding = ({navigation}) => {
         </Pressable>
       </View>
       <Footer />
-    </>
+    </KeyboardAvoidingView>
 
   );
 }
@@ -83,6 +102,10 @@ const Onboarding = ({navigation}) => {
 const styles = StyleSheet.create({
   ...formStyles,
   ...generalStyles,
+  keyboardAvoidingView: {
+    flex: 1,
+    backgroundColor: colors.highlight1,
+  },
   title: {
     fontFamily: 'Markazi',
     fontSize: 28,

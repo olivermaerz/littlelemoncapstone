@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Markazi',
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 10,
     alignItems: 'center',
     backgroundColor: colors.highlight1,
     flexDirection: 'row',

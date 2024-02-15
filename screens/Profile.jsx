@@ -1,4 +1,14 @@
-import {View, Text, TextInput, Pressable, StyleSheet, Alert, Image, ScrollView} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  Alert,
+  Image,
+  ScrollView,
+  KeyboardAvoidingView, Platform
+} from 'react-native';
 import CheckBox from 'expo-checkbox';
 import {useContext, useEffect, useState} from 'react';
 import {MaskedTextInput} from 'react-native-mask-text';
@@ -16,7 +26,7 @@ import Footer from '../components/Footer';
 
 // get some helper functions for form validation and data storage on local device
 import {validGenericField, validEmailField, validPhoneField} from '../utils/validateFormFields';
-import {saveUserData} from '../utils/dataStorage';
+import {deleteMenuItems, deleteUserData, saveUserData} from '../utils/dataStorage';
 
 /**
  * Profile screen
@@ -111,18 +121,12 @@ const Profile = () => {
    */
   const logout = () => {
     resetForm(true);
-    user.updateUser({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      orderStatuses: false,
-      passwordChanges: false,
-      specialOffers: false,
-      newsletter: false,
-      avatar: null,
-      isLoggedIn: false,
-    });
+    // first delete the user data from the context
+    user.deleteUser();
+    // delete the user data from async storage
+    deleteUserData();
+    // then delete menu items from sqlite db
+    deleteMenuItems();
   }
 
   /**
@@ -134,7 +138,6 @@ const Profile = () => {
       validGenericField(lastName, 'last name') +
       validEmailField(email) +
       validPhoneField(phone);
-
     if (error) {
       Alert.alert('Oops', '\n' + error);
       return;
@@ -154,7 +157,11 @@ const Profile = () => {
   }, [user.data]);
 
   return (
-    <>
+    <KeyboardAvoidingView
+      style={styles.keyboardAvoidingView} // Make sure KeyboardAvoidingView takes up the full screen
+      behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjust behavior based on the OS
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0} // Adjust the offset on iOS
+    >
       <ScrollView style={styles.container}>
         <Text style={styles.headerText}>Avatar</Text>
         <View style={styles.avatarContainer}>
@@ -186,8 +193,8 @@ const Profile = () => {
           // set the state
           onChangeText={(text) => setFirstName(text)}
         />
-        {formWasSubmitted && validGenericField(firstName, 'first name') && <Text style={styles.formError}>{validGenericField(lastName, 'first name')}</Text>}
-
+        {formWasSubmitted && validGenericField(firstName, 'first name') &&
+          <Text style={styles.formError}>{validGenericField(lastName, 'first name')}</Text>}
         <Text style={styles.fieldText}>Last Name</Text>
         <TextInput
           placeholder="Doe"
@@ -197,8 +204,8 @@ const Profile = () => {
           // set the state
           onChangeText={(text) => setLastName(text)}
         />
-        {formWasSubmitted && validGenericField(lastName, 'last name') && <Text style={styles.formError}>{validGenericField(lastName, 'last name')}</Text>}
-
+        {formWasSubmitted && validGenericField(lastName, 'last name') &&
+          <Text style={styles.formError}>{validGenericField(lastName, 'last name')}</Text>}
         <Text style={styles.fieldText}>Email</Text>
         <TextInput
           autoCapitalize='none'
@@ -211,9 +218,7 @@ const Profile = () => {
           onChangeText={(text) => setEmail(text)}
         />
         {formWasSubmitted && validEmailField(email) && <Text style={styles.formError}>{validEmailField(email)}</Text>}
-
         <Text style={styles.fieldText}>Phone number</Text>
-
         <MaskedTextInput
           mask="(999) 999-9999"
           placeholder={'(123) 456-7890'}
@@ -222,11 +227,8 @@ const Profile = () => {
           onChangeText={(text) => setPhone(text)}
           style={styles.input}
         />
-
         {formWasSubmitted && validPhoneField(phone) && <Text style={styles.formError}>{validPhoneField(phone)}</Text>}
-
         <Text style={styles.headerText}>Email Notifications</Text>
-
         <View style={styles.checkboxContainer}>
           <CheckBox
             value={orderStatuses}
@@ -263,12 +265,10 @@ const Profile = () => {
         />
         <Text style={styles.checkBoxText}>Newsletter</Text>
       </View>
-
         <Pressable style={({pressed}) => getButtonStyle(pressed, styles.button)}
                    onPress={handleSubmit}>
           <Text style={styles.buttonText}>Save Profile</Text>
         </Pressable>
-
         <View style={styles.secondaryButtonsContainer}>
           <Pressable style={({pressed}) => getButtonStyle(pressed, styles.secondaryButton)}
                      onPress={(e) => resetForm(false)}>
@@ -278,13 +278,11 @@ const Profile = () => {
                      onPress={logout}>
             <Text style={styles.buttonText}>Logout</Text>
           </Pressable>
-
         </View>
-
       </ScrollView>
       <Footer />
       <FlashMessage position="top" style={styles.flash} textStyle={styles.flashText} titleStyle={styles.flashText}/>
-    </>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -295,6 +293,10 @@ const Profile = () => {
 const styles = StyleSheet.create({
   ...generalStyles,
   ...formStyles,
+  keyboardAvoidingView: {
+    flex: 1,
+    backgroundColor: colors.highlight1,
+  },
   headerText: {
     fontFamily: 'Markazi',
     fontWeight: 'bold',
